@@ -1,0 +1,645 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>WCG Daily Driver</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=DM+Sans:wght@300;400;500;600&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: #08131F; font-family: 'DM Sans', sans-serif; color: #EAE6DF; min-height: 100vh; }
+  .app { max-width: 480px; margin: 0 auto; padding-bottom: 80px; }
+
+  /* Header */
+  .header {
+    background: linear-gradient(180deg, #0D1F3C 0%, #08131F 100%);
+    padding: 20px 18px 16px;
+    border-bottom: 1px solid rgba(184,146,42,0.18);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-row { display: flex; justify-content: space-between; align-items: flex-start; }
+  .header-label { font-size: 9px; color: #B8922A; letter-spacing: 0.2em; text-transform: uppercase; font-weight: 500; margin-bottom: 3px; }
+  .header-title { font-family: 'Cormorant Garamond', serif; font-size: 24px; color: #EAE6DF; font-weight: 600; line-height: 1; }
+  .header-date { font-size: 11px; color: #6B7B8D; margin-top: 4px; }
+  .header-right { text-align: right; }
+  .stale-count { font-size: 11px; color: #D95F5F; font-weight: 500; }
+  .urgent-count { font-size: 11px; color: #6B7B8D; margin-top: 3px; }
+
+  /* Flash */
+  .flash-msg {
+    margin-top: 10px; padding: 8px 12px; border-radius: 8px;
+    background: rgba(95,158,138,0.15); border: 1px solid rgba(95,158,138,0.4);
+    font-size: 12px; color: #5F9E8A; display: none;
+  }
+  .flash-msg.show { display: block; }
+
+  /* Tabs */
+  .tabs { display: flex; padding: 12px 12px 0; gap: 6px; }
+  .tab {
+    flex: 1; padding: 8px 2px; border-radius: 8px;
+    border: 1px solid rgba(255,255,255,0.07);
+    background: transparent; color: #6B7B8D;
+    font-size: 10px; font-family: 'DM Sans', sans-serif; font-weight: 500;
+    cursor: pointer; position: relative; letter-spacing: 0.04em;
+    transition: all 0.18s;
+  }
+  .tab.active {
+    background: #0D1F3C; color: #EAE6DF;
+    border-color: rgba(184,146,42,0.35);
+  }
+  .tab .badge {
+    position: absolute; top: -5px; right: -4px;
+    width: 15px; height: 15px; border-radius: 50%;
+    font-size: 8px; font-weight: 700; color: #fff;
+    display: flex; align-items: center; justify-content: center;
+  }
+  .badge-red { background: #D95F5F; }
+  .badge-gold { background: #B8922A; }
+
+  /* Tab content */
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  /* Today Action */
+  .action-card {
+    margin: 16px 16px 0;
+    background: linear-gradient(145deg, #0D2010 0%, #091A0E 100%);
+    border: 1px solid #1E4A28; border-radius: 14px; padding: 18px;
+  }
+  .action-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 14px; }
+  .action-label { font-size: 9px; color: #5F9E8A; letter-spacing: 0.18em; text-transform: uppercase; font-weight: 600; }
+  .urgency-pill {
+    font-size: 9px; color: #D4A853; background: rgba(212,168,83,0.12);
+    padding: 3px 8px; border-radius: 4px; letter-spacing: 0.06em;
+  }
+  .contact-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .avatar {
+    width: 42px; height: 42px; border-radius: 50%;
+    background: linear-gradient(135deg, #B8922A, #C8A052);
+    display: flex; align-items: center; justify-content: center;
+    font-size: 15px; font-weight: 700; color: #0D1F3C; flex-shrink: 0;
+  }
+  .contact-name { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: #EAE6DF; font-weight: 600; line-height: 1; }
+  .contact-sub { font-size: 11px; color: #6B7B8D; margin-top: 3px; }
+  .action-summary { font-size: 13px; color: #A8C4A8; line-height: 1.65; margin-bottom: 14px; }
+  .opener {
+    background: rgba(0,0,0,0.25); border-radius: 8px; padding: 11px 14px;
+    font-size: 13px; color: #C8DCC8; font-style: italic; line-height: 1.6;
+    margin-bottom: 16px; border-left: 3px solid #5F9E8A;
+  }
+  .action-btns { display: flex; gap: 8px; }
+  .btn {
+    flex: 1; padding: 11px 0; border-radius: 8px;
+    background: rgba(95,158,138,0.08); border: 1px solid #2A5A3A;
+    color: #8AB89A; font-size: 12px; font-family: 'DM Sans', sans-serif;
+    font-weight: 500; cursor: pointer; text-align: center;
+    text-decoration: none; display: flex; align-items: center; justify-content: center;
+    transition: all 0.18s;
+  }
+  .btn:active { transform: scale(0.96); }
+  .btn.copied { background: rgba(95,158,138,0.2); border-color: #5F9E8A; color: #5F9E8A; }
+  .btn-call { flex: 0 0 auto; padding: 11px 16px; }
+  .btn-log {
+    width: 100%; margin-top: 10px; padding: 10px 0; border-radius: 8px;
+    background: transparent; border: 1px solid #3A4A5A; color: #6B7B8D;
+    font-size: 11px; font-family: 'DM Sans', sans-serif; cursor: pointer;
+    letter-spacing: 0.08em; transition: all 0.18s;
+  }
+  .also-today { margin: 16px 16px 0; }
+  .section-label { font-size: 9px; color: #6B7B8D; letter-spacing: 0.15em; text-transform: uppercase; margin-bottom: 10px; }
+
+  /* Panel */
+  .panel { background: #0F1E30; border-radius: 12px; border: 1px solid rgba(255,255,255,0.07); overflow: hidden; margin: 0 16px; }
+  .panel-label { padding: 10px 16px 6px; font-size: 9px; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 600; }
+  .label-red { color: #D95F5F; }
+  .label-green { color: #5F9E8A; }
+  .label-muted { color: #6B7B8D; }
+
+  /* Deal Row */
+  .deal-row {
+    padding: 13px 16px; border-bottom: 1px solid rgba(255,255,255,0.07);
+    display: flex; gap: 12px; align-items: flex-start;
+  }
+  .deal-row:last-child { border-bottom: none; }
+  .dot {
+    width: 7px; height: 7px; border-radius: 50%; margin-top: 5px; flex-shrink: 0;
+  }
+  .dot-red { background: #D95F5F; box-shadow: 0 0 7px rgba(217,95,95,0.5); }
+  .dot-gold { background: #B8922A; box-shadow: 0 0 7px rgba(184,146,42,0.4); }
+  .dot-green { background: #5F9E8A; }
+  .deal-info { flex: 1; min-width: 0; }
+  .deal-header { display: flex; justify-content: space-between; align-items: baseline; gap: 6px; }
+  .deal-name { font-family: 'Cormorant Garamond', serif; font-size: 15px; color: #EAE6DF; font-weight: 600; }
+  .deal-age { font-size: 10px; }
+  .age-red { color: #D95F5F; }
+  .age-gold { color: #B8922A; }
+  .age-muted { color: #6B7B8D; }
+  .deal-meta { font-size: 11px; color: #6B7B8D; margin-top: 2px; }
+  .deal-next { font-size: 12px; color: #A09888; margin-top: 5px; line-height: 1.55; }
+  .log-btn {
+    flex-shrink: 0; padding: 5px 10px; border-radius: 6px;
+    background: transparent; border: 1px solid #3A4A5A;
+    color: #6B7B8D; font-size: 10px; font-family: 'DM Sans', sans-serif;
+    cursor: pointer; margin-top: 2px; transition: all 0.15s;
+  }
+
+  /* Followup Row */
+  .followup-row {
+    padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.07);
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .followup-row:last-child { border-bottom: none; }
+  .urgency-bar { width: 4px; align-self: stretch; border-radius: 2px; flex-shrink: 0; opacity: 0.7; }
+  .followup-info { flex: 1; min-width: 0; }
+  .followup-header { display: flex; justify-content: space-between; align-items: baseline; }
+  .followup-name { font-size: 14px; color: #EAE6DF; font-weight: 500; }
+  .followup-age { font-size: 10px; color: #6B7B8D; flex-shrink: 0; }
+  .followup-firm { font-size: 11px; color: #6B7B8D; }
+  .followup-detail { font-size: 12px; color: #A09888; margin-top: 5px; line-height: 1.55; }
+
+  /* Checklist */
+  .checklist-header { padding: 14px 16px 10px; }
+  .checklist-title-row { display: flex; justify-content: space-between; margin-bottom: 8px; }
+  .checklist-title { font-size: 9px; color: #6B7B8D; letter-spacing: 0.15em; text-transform: uppercase; font-weight: 600; }
+  .checklist-pct { font-size: 11px; color: #B8922A; }
+  .progress-bar { height: 3px; background: #1A2A3A; border-radius: 2px; }
+  .progress-fill { height: 100%; background: linear-gradient(90deg, #B8922A, #C8A052); border-radius: 2px; transition: width 0.4s; }
+  .check-item {
+    padding: 12px 16px; border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: flex; align-items: center; gap: 12px; cursor: pointer;
+  }
+  .check-item:last-child { border-bottom: none; }
+  .check-item.done { opacity: 0.38; }
+  .checkbox {
+    width: 18px; height: 18px; border-radius: 4px;
+    border: 1.5px solid #3A4A5A; flex-shrink: 0;
+    background: transparent; display: flex; align-items: center; justify-content: center;
+  }
+  .checkbox.checked { background: #B8922A; border-color: #B8922A; }
+  .checkbox.checked::after { content: '✓'; color: #0D1F3C; font-size: 11px; font-weight: 800; }
+  .check-text { font-size: 13px; color: #A09888; line-height: 1.45; }
+  .check-item.done .check-text { text-decoration: line-through; }
+  .completed-label { padding: 10px 16px 4px; font-size: 9px; color: #3A4A5A; letter-spacing: 0.12em; text-transform: uppercase; }
+
+  /* Log Sheet */
+  .overlay {
+    position: fixed; inset: 0; background: rgba(8,19,31,0.85); z-index: 200;
+    display: none; align-items: flex-end; backdrop-filter: blur(4px);
+  }
+  .overlay.show { display: flex; }
+  .log-sheet {
+    width: 100%; background: #0F1E30; border-top: 1px solid rgba(184,146,42,0.27);
+    border-radius: 16px 16px 0 0; padding: 20px 20px 36px;
+    animation: slideUp 0.28s ease;
+  }
+  @keyframes slideUp { from { opacity: 0; transform: translateY(12px); } to { opacity: 1; transform: translateY(0); } }
+  .sheet-handle { width: 36px; height: 3px; background: #3A4A5A; border-radius: 2px; margin: 0 auto 18px; }
+  .sheet-label { font-size: 11px; color: #6B7B8D; letter-spacing: 0.14em; text-transform: uppercase; margin-bottom: 4px; }
+  .sheet-contact { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: #EAE6DF; margin-bottom: 18px; }
+  .sheet-contact span { color: #6B7B8D; font-size: 14px; font-family: 'DM Sans', sans-serif; }
+  .log-options { display: flex; flex-direction: column; gap: 10px; }
+  .log-opt {
+    padding: 14px 18px; border-radius: 10px;
+    border: 1px solid rgba(255,255,255,0.07);
+    background: rgba(255,255,255,0.03);
+    color: #EAE6DF; font-size: 15px; font-family: 'DM Sans', sans-serif;
+    text-align: left; cursor: pointer; transition: all 0.15s;
+  }
+  .log-opt:active { transform: scale(0.98); }
+  .log-opt.selected { background: rgba(95,158,138,0.15); border-color: #5F9E8A; color: #5F9E8A; }
+
+  /* Bottom bar */
+  .bottom-bar {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 480px;
+    background: #0D1F3C; border-top: 1px solid rgba(184,146,42,0.12);
+    padding: 10px 20px; display: flex; justify-content: space-between; align-items: center;
+  }
+  .bottom-bar span { font-size: 10px; color: #6B7B8D; }
+  .bottom-bar .wcg { font-size: 10px; color: #B8922A; letter-spacing: 0.1em; }
+
+  .loading { padding: 40px; text-align: center; color: #6B7B8D; font-size: 13px; }
+  .mt16 { margin-top: 16px; }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-row">
+      <div>
+        <div class="header-label">Wasatch Capital Group</div>
+        <div class="header-title">Daily Driver</div>
+        <div class="header-date" id="todayDate"></div>
+      </div>
+      <div class="header-right">
+        <div class="stale-count" id="staleCount"></div>
+        <div class="urgent-count" id="urgentCount"></div>
+      </div>
+    </div>
+    <div class="flash-msg" id="flashMsg"></div>
+  </div>
+
+  <!-- Tabs -->
+  <div class="tabs">
+    <button class="tab active" onclick="switchTab('action')" id="tab-action">Action</button>
+    <button class="tab" onclick="switchTab('deals')" id="tab-deals">
+      Deals<span class="badge badge-red" id="badge-deals" style="display:none"></span>
+    </button>
+    <button class="tab" onclick="switchTab('followup')" id="tab-followup">
+      Follow-Up<span class="badge badge-gold" id="badge-followup" style="display:none"></span>
+    </button>
+    <button class="tab" onclick="switchTab('goals')" id="tab-goals">Goals</button>
+  </div>
+
+  <!-- Action Tab -->
+  <div class="tab-content active" id="content-action">
+    <div class="loading" id="action-loading">Loading…</div>
+    <div id="action-main" style="display:none">
+      <div class="action-card">
+        <div class="action-header">
+          <div class="action-label">Today's Action</div>
+          <div class="urgency-pill" id="urgency-pill"></div>
+        </div>
+        <div class="contact-row">
+          <div class="avatar" id="contact-avatar"></div>
+          <div>
+            <div class="contact-name" id="contact-name"></div>
+            <div class="contact-sub" id="contact-sub"></div>
+          </div>
+        </div>
+        <div class="action-summary" id="action-summary"></div>
+        <div class="opener" id="opener-text"></div>
+        <div class="action-btns">
+          <button class="btn" id="copy-btn" onclick="copyOpener()">Copy opener</button>
+          <a class="btn" id="email-btn" href="#">Email</a>
+          <a class="btn btn-call" id="call-btn" href="#">Call</a>
+        </div>
+        <button class="btn-log" onclick="openLog(currentAction.contact_name, currentAction.firm)">Log this contact →</button>
+      </div>
+      <div class="also-today" id="also-today" style="display:none">
+        <div class="section-label">Also needs you today</div>
+        <div class="panel" id="also-today-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Deals Tab -->
+  <div class="tab-content" id="content-deals">
+    <div class="loading" id="deals-loading">Loading…</div>
+    <div id="deals-main" style="display:none">
+      <div id="stale-section" style="display:none">
+        <div class="panel-label label-red" style="padding-top:14px">Stale — touch needed</div>
+        <div class="panel" id="stale-list"></div>
+      </div>
+      <div class="panel-label label-green" style="padding-top:14px">Active</div>
+      <div class="panel" id="active-list"></div>
+    </div>
+  </div>
+
+  <!-- Follow-Up Tab -->
+  <div class="tab-content" id="content-followup">
+    <div class="loading" id="followup-loading">Loading…</div>
+    <div id="followup-main" style="display:none">
+      <div class="panel-label label-muted mt16" id="followup-count-label"></div>
+      <div class="panel" id="followup-list"></div>
+    </div>
+  </div>
+
+  <!-- Goals Tab -->
+  <div class="tab-content" id="content-goals">
+    <div class="loading" id="goals-loading">Loading…</div>
+    <div id="goals-main" style="display:none">
+      <div class="panel mt16">
+        <div class="checklist-header">
+          <div class="checklist-title-row">
+            <span class="checklist-title" id="checklist-title"></span>
+            <span class="checklist-pct" id="checklist-pct"></span>
+          </div>
+          <div class="progress-bar"><div class="progress-fill" id="progress-fill"></div></div>
+        </div>
+        <div id="checklist-active"></div>
+        <div class="completed-label" id="completed-label" style="display:none">Completed</div>
+        <div id="checklist-done"></div>
+      </div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Bottom Bar -->
+<div class="bottom-bar">
+  <span>cwagner@wasatchcg.com</span>
+  <span class="wcg">WCG</span>
+  <span>801.455.6965</span>
+</div>
+
+<!-- Log Sheet Overlay -->
+<div class="overlay" id="overlay" onclick="closeLog(event)">
+  <div class="log-sheet">
+    <div class="sheet-handle"></div>
+    <div class="sheet-label">Log contact</div>
+    <div class="sheet-contact" id="sheet-contact-name"></div>
+    <div class="log-options">
+      <button class="log-opt" onclick="logContact('email')">📧 Sent email</button>
+      <button class="log-opt" onclick="logContact('call')">📞 Called</button>
+      <button class="log-opt" onclick="logContact('meeting')">🤝 Met in person</button>
+      <button class="log-opt" onclick="logContact('touch')">👋 Touched base</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SB_URL = 'https://tddqgedubihzliosswzd.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkZHFnZWR1Ymloemxpb3Nzd3pkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxMDEzNDAsImV4cCI6MjA4ODY3NzM0MH0.fRsXqdpYNQOi7B36O1SmkjBqwQCtDpenxsgZNEY5NyY';
+
+async function sbFetch(table, params = '') {
+  const r = await fetch(`${SB_URL}/rest/v1/${table}${params}`, {
+    headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json' }
+  });
+  if (!r.ok) throw new Error(`${r.status}`);
+  return r.json();
+}
+
+async function sbPost(table, body) {
+  const r = await fetch(`${SB_URL}/rest/v1/${table}`, {
+    method: 'POST',
+    headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+    body: JSON.stringify(body)
+  });
+  return r.ok;
+}
+
+async function sbPatch(table, match, body) {
+  const r = await fetch(`${SB_URL}/rest/v1/${table}?${match}`, {
+    method: 'PATCH',
+    headers: { 'apikey': SB_KEY, 'Authorization': `Bearer ${SB_KEY}`, 'Content-Type': 'application/json', 'Prefer': 'return=minimal' },
+    body: JSON.stringify(body)
+  });
+  return r.ok;
+}
+
+const urgencyRank = { urgent: 0, high: 1, 'this week': 2, warm: 3, medium: 4, low: 5, dormant: 99 };
+const norm = u => (u || '').toLowerCase().trim();
+
+function daysSince(d) {
+  if (!d) return 999;
+  return Math.max(0, Math.floor((Date.now() - new Date(d)) / 86400000));
+}
+
+function initials(name) {
+  return (name || '').split(' ').map(w => w[0]).join('').slice(0, 2).toUpperCase();
+}
+
+function truncate(s, n) {
+  return s && s.length > n ? s.slice(0, n) + '…' : (s || '');
+}
+
+// State
+let currentAction = null;
+let currentLogContact = { name: '', firm: '' };
+let checklistItems = [];
+
+// Tab switching
+function switchTab(tab) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + tab).classList.add('active');
+  document.getElementById('content-' + tab).classList.add('active');
+}
+
+// Flash message
+function flash(msg) {
+  const el = document.getElementById('flashMsg');
+  el.textContent = msg;
+  el.classList.add('show');
+  setTimeout(() => el.classList.remove('show'), 3000);
+}
+
+// Copy opener
+function copyOpener() {
+  if (!currentAction) return;
+  navigator.clipboard.writeText(currentAction.opener_text || '').then(() => {
+    const btn = document.getElementById('copy-btn');
+    btn.textContent = '✓ Copied';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy opener'; btn.classList.remove('copied'); }, 2000);
+  });
+}
+
+// Log sheet
+function openLog(name, firm) {
+  currentLogContact = { name, firm };
+  document.getElementById('sheet-contact-name').innerHTML = `${name} <span>· ${firm}</span>`;
+  document.querySelectorAll('.log-opt').forEach(o => o.classList.remove('selected'));
+  document.getElementById('overlay').classList.add('show');
+}
+
+function closeLog(e) {
+  if (e.target === document.getElementById('overlay')) {
+    document.getElementById('overlay').classList.remove('show');
+  }
+}
+
+async function logContact(type) {
+  const opts = document.querySelectorAll('.log-opt');
+  opts.forEach(o => o.classList.remove('selected'));
+  event.target.classList.add('selected');
+  event.target.textContent = 'Saving…';
+
+  await sbPost('quick_log', {
+    contact_name: currentLogContact.name,
+    firm: currentLogContact.firm,
+    log_type: type,
+    logged_at: new Date().toISOString()
+  });
+  await sbPatch('followup_queue', `name=eq.${encodeURIComponent(currentLogContact.name)}`, {
+    last_contact: new Date().toISOString().split('T')[0]
+  });
+
+  flash(`✓ Logged as "${type}" — CRM updated`);
+  setTimeout(() => document.getElementById('overlay').classList.remove('show'), 600);
+}
+
+// Render action tab
+function renderAction(action, followups) {
+  document.getElementById('action-loading').style.display = 'none';
+  document.getElementById('action-main').style.display = 'block';
+
+  if (!action) return;
+  currentAction = action;
+
+  document.getElementById('urgency-pill').textContent = truncate(action.urgency_reason, 40);
+  document.getElementById('contact-avatar').textContent = initials(action.contact_name);
+  document.getElementById('contact-name').textContent = action.contact_name;
+  document.getElementById('contact-sub').textContent = `${action.firm} · ${action.deal_ref || ''}`;
+  document.getElementById('action-summary').textContent = action.action_summary;
+  document.getElementById('opener-text').textContent = `"${action.opener_text}"`;
+  document.getElementById('email-btn').href = `mailto:${action.email || ''}`;
+  document.getElementById('call-btn').href = `tel:${action.phone || ''}`;
+  if (!action.phone) document.getElementById('call-btn').style.display = 'none';
+
+  // Urgent followups below action
+  const urgent = followups.filter(f => ['urgent','high','this week'].includes(norm(f.urgency))).slice(0, 4);
+  if (urgent.length > 0) {
+    document.getElementById('also-today').style.display = 'block';
+    document.getElementById('also-today-list').innerHTML = urgent.map(f => renderFollowupRow(f)).join('');
+  }
+}
+
+// Render deals tab
+function renderDeals(deals) {
+  document.getElementById('deals-loading').style.display = 'none';
+  document.getElementById('deals-main').style.display = 'block';
+
+  const stale = deals.filter(d => daysSince(d.last_contacted_at || d.updated_at) >= 7);
+  const active = deals.filter(d => daysSince(d.last_contacted_at || d.updated_at) < 7);
+
+  // Update badge
+  if (stale.length > 0) {
+    const b = document.getElementById('badge-deals');
+    b.textContent = stale.length; b.style.display = 'flex';
+    document.getElementById('staleCount').textContent = `${stale.length} deals need attention`;
+  }
+
+  if (stale.length > 0) {
+    document.getElementById('stale-section').style.display = 'block';
+    document.getElementById('stale-list').innerHTML = stale.map(d => renderDealRow(d)).join('');
+  }
+
+  document.getElementById('active-list').innerHTML = active.length > 0
+    ? active.map(d => renderDealRow(d)).join('')
+    : '<div class="deal-row"><div style="color:#6B7B8D;font-size:13px">All deals need a touch.</div></div>';
+}
+
+function renderDealRow(d) {
+  const days = daysSince(d.last_contacted_at || d.updated_at);
+  const hot = days >= 14, stale = days >= 7;
+  const dotClass = hot ? 'dot-red' : stale ? 'dot-gold' : 'dot-green';
+  const ageClass = hot ? 'age-red' : stale ? 'age-gold' : 'age-muted';
+  const ageText = days === 0 ? 'today' : `${days}d`;
+  const contact = (d.contact || '').split(',')[0];
+  return `
+    <div class="deal-row">
+      <div class="dot ${dotClass}"></div>
+      <div class="deal-info">
+        <div class="deal-header">
+          <span class="deal-name">${d.deal_name || ''}</span>
+          <span class="deal-age ${ageClass}">${ageText}</span>
+        </div>
+        <div class="deal-meta">${contact} · ${d.units || ''}u · ${d.product || ''}</div>
+        <div class="deal-next">${truncate(d.next_step, 100)}</div>
+      </div>
+      <button class="log-btn" onclick="openLog('${(contact).replace(/'/g,"\\'")}','${(d.sponsor||'').replace(/'/g,"\\'")}')">Log</button>
+    </div>`;
+}
+
+// Render followup tab
+function renderFollowups(followups) {
+  document.getElementById('followup-loading').style.display = 'none';
+  document.getElementById('followup-main').style.display = 'block';
+
+  const urgent = followups.filter(f => ['urgent','high','this week'].includes(norm(f.urgency)));
+  if (urgent.length > 0) {
+    const b = document.getElementById('badge-followup');
+    b.textContent = urgent.length; b.style.display = 'flex';
+    document.getElementById('urgentCount').textContent = `${urgent.length} urgent follow-ups`;
+  }
+
+  const visible = followups.filter(f => norm(f.urgency) !== 'dormant');
+  document.getElementById('followup-count-label').textContent = `${visible.length} contacts · sorted by urgency`;
+  document.getElementById('followup-list').innerHTML = visible.map(f => renderFollowupRow(f)).join('');
+}
+
+function renderFollowupRow(f) {
+  const urg = norm(f.urgency);
+  const colors = { urgent: '#D95F5F', high: '#B8922A', 'this week': '#B8922A', warm: '#5F9E8A', medium: '#4A7B8A', low: '#6B7B8D', dormant: '#3A4A5A' };
+  const col = colors[urg] || '#6B7B8D';
+  const days = daysSince(f.last_contact);
+  const ageText = days === 0 ? 'today' : days < 999 ? `${days}d ago` : '';
+  return `
+    <div class="followup-row">
+      <div class="urgency-bar" style="background:${col}"></div>
+      <div class="followup-info">
+        <div class="followup-header">
+          <span class="followup-name">${f.name || ''}</span>
+          <span class="followup-age">${ageText}</span>
+        </div>
+        <div class="followup-firm">${f.firm || ''}</div>
+        <div class="followup-detail">${truncate(f.detail, 110)}</div>
+      </div>
+      <button class="log-btn" onclick="openLog('${(f.name||'').replace(/'/g,"\\'")}','${(f.firm||'').replace(/'/g,"\\'")}')">Log</button>
+    </div>`;
+}
+
+// Render checklist
+function renderChecklist(items) {
+  document.getElementById('goals-loading').style.display = 'none';
+  document.getElementById('goals-main').style.display = 'block';
+  checklistItems = items;
+  updateChecklist();
+}
+
+function updateChecklist() {
+  const done = checklistItems.filter(i => i.done).length;
+  const pct = Math.round((done / Math.max(checklistItems.length, 1)) * 100);
+  document.getElementById('checklist-title').textContent = `2026 Milestones — ${done}/${checklistItems.length}`;
+  document.getElementById('checklist-pct').textContent = `${pct}%`;
+  document.getElementById('progress-fill').style.width = `${pct}%`;
+
+  const active = checklistItems.filter(i => !i.done);
+  const completed = checklistItems.filter(i => i.done);
+
+  document.getElementById('checklist-active').innerHTML = active.map(item => `
+    <div class="check-item" onclick="toggleItem(${item.id})">
+      <div class="checkbox"></div>
+      <span class="check-text">${item.text}</span>
+    </div>`).join('');
+
+  document.getElementById('completed-label').style.display = completed.length > 0 ? 'block' : 'none';
+  document.getElementById('checklist-done').innerHTML = completed.map(item => `
+    <div class="check-item done" onclick="toggleItem(${item.id})">
+      <div class="checkbox checked"></div>
+      <span class="check-text">${item.text}</span>
+    </div>`).join('');
+}
+
+async function toggleItem(id) {
+  const item = checklistItems.find(i => i.id === id);
+  if (!item) return;
+  item.done = !item.done;
+  updateChecklist();
+  await sbPatch('checklist_items', `id=eq.${id}`, { done: item.done, updated_at: new Date().toISOString() });
+}
+
+// Set today's date
+document.getElementById('todayDate').textContent = new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+
+// Load all data
+async function loadAll() {
+  try {
+    const [action, deals, followupsRaw, checklist] = await Promise.all([
+      sbFetch('daily_action', '?id=eq.1').then(d => d[0] || null),
+      sbFetch('pipeline_deals', '?order=updated_at.asc'),
+      sbFetch('followup_queue', '?order=sort_order.asc'),
+      sbFetch('checklist_items', '?order=sort_order.asc')
+    ]);
+
+    const followups = [...followupsRaw].sort((a,b) => (urgencyRank[norm(a.urgency)] ?? 5) - (urgencyRank[norm(b.urgency)] ?? 5));
+
+    renderAction(action, followups);
+    renderDeals(deals);
+    renderFollowups(followups);
+    renderChecklist(checklist);
+  } catch(e) {
+    document.querySelectorAll('.loading').forEach(el => el.textContent = 'Error loading data. Check console.');
+    console.error('Load error:', e);
+  }
+}
+
+loadAll();
+</script>
+</body>
+</html>
