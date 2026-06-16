@@ -1,0 +1,595 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>WCG Owner 360</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;500;600&family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --navy: #0D1F3C;
+    --navy-dark: #08131F;
+    --navy-mid: #0F1E30;
+    --gold: #B8922A;
+    --gold-light: #D4A853;
+    --gold-muted: rgba(184,146,42,0.12);
+    --off-white: #EAE6DF;
+    --muted: #6B7B8D;
+    --border: rgba(184,146,42,0.15);
+    --border-dim: rgba(255,255,255,0.07);
+    --green: #5F9E8A;
+    --red: #D95F5F;
+    --amber: #C8873A;
+  }
+
+  body {
+    background: var(--navy-dark);
+    font-family: 'DM Sans', sans-serif;
+    color: var(--off-white);
+    min-height: 100vh;
+  }
+
+  /* ── HEADER ── */
+  .header {
+    background: linear-gradient(180deg, var(--navy) 0%, var(--navy-dark) 100%);
+    padding: 20px 18px 14px;
+    border-bottom: 1px solid var(--border);
+    position: sticky; top: 0; z-index: 100;
+  }
+  .header-row { display: flex; align-items: center; gap: 12px; margin-bottom: 14px; }
+  .back-btn {
+    background: transparent; border: 1px solid var(--border-dim);
+    color: var(--muted); font-size: 11px; font-family: 'DM Sans', sans-serif;
+    padding: 6px 10px; border-radius: 6px; cursor: pointer; flex-shrink: 0;
+    text-decoration: none; display: flex; align-items: center; gap: 4px;
+  }
+  .header-title-group { flex: 1; }
+  .header-eyebrow { font-size: 9px; color: var(--gold); letter-spacing: 0.2em; text-transform: uppercase; margin-bottom: 2px; }
+  .header-title { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; line-height: 1; }
+
+  /* ── SEARCH ── */
+  .search-wrap { position: relative; }
+  .search-input {
+    width: 100%; padding: 11px 16px 11px 38px;
+    background: rgba(255,255,255,0.05); border: 1px solid var(--border);
+    border-radius: 10px; color: var(--off-white);
+    font-size: 14px; font-family: 'DM Sans', sans-serif;
+    outline: none; transition: border-color 0.2s;
+  }
+  .search-input:focus { border-color: var(--gold); }
+  .search-input::placeholder { color: var(--muted); }
+  .search-icon {
+    position: absolute; left: 12px; top: 50%; transform: translateY(-50%);
+    color: var(--muted); font-size: 14px; pointer-events: none;
+  }
+  .search-clear {
+    position: absolute; right: 10px; top: 50%; transform: translateY(-50%);
+    background: none; border: none; color: var(--muted); font-size: 16px;
+    cursor: pointer; padding: 4px; display: none;
+  }
+
+  /* ── SUGGESTIONS ── */
+  .suggestions {
+    position: absolute; top: calc(100% + 4px); left: 0; right: 0;
+    background: var(--navy-mid); border: 1px solid var(--border);
+    border-radius: 10px; z-index: 200; overflow: hidden;
+    box-shadow: 0 8px 24px rgba(0,0,0,0.4); display: none;
+  }
+  .suggestions.show { display: block; }
+  .suggestion-item {
+    padding: 11px 16px; cursor: pointer; border-bottom: 1px solid var(--border-dim);
+    display: flex; justify-content: space-between; align-items: center;
+  }
+  .suggestion-item:last-child { border-bottom: none; }
+  .suggestion-item:hover { background: rgba(255,255,255,0.04); }
+  .sug-name { font-size: 13px; color: var(--off-white); }
+  .sug-name em { color: var(--gold); font-style: normal; }
+  .sug-meta { font-size: 11px; color: var(--muted); font-family: 'DM Mono', monospace; }
+
+  /* ── MAIN ── */
+  .main { padding: 0 0 80px; }
+
+  /* ── EMPTY STATE ── */
+  .empty-state {
+    padding: 48px 24px; text-align: center;
+  }
+  .empty-icon { font-size: 36px; margin-bottom: 14px; opacity: 0.4; }
+  .empty-title { font-family: 'Cormorant Garamond', serif; font-size: 20px; color: var(--off-white); margin-bottom: 6px; }
+  .empty-sub { font-size: 13px; color: var(--muted); line-height: 1.6; }
+
+  /* ── OWNER HEADER CARD ── */
+  .owner-card {
+    margin: 16px 16px 0;
+    background: linear-gradient(135deg, rgba(184,146,42,0.08) 0%, rgba(13,31,60,0.6) 100%);
+    border: 1px solid var(--border); border-radius: 14px; padding: 18px;
+  }
+  .owner-name { font-family: 'Cormorant Garamond', serif; font-size: 26px; font-weight: 600; line-height: 1.1; margin-bottom: 4px; }
+  .owner-contact { font-size: 12px; color: var(--muted); margin-bottom: 14px; }
+  .owner-contact a { color: var(--green); text-decoration: none; }
+
+  .stat-row { display: grid; grid-template-columns: repeat(3, 1fr); gap: 10px; }
+  .stat-box {
+    background: rgba(0,0,0,0.2); border-radius: 8px; padding: 11px 12px;
+    border: 1px solid var(--border-dim);
+  }
+  .stat-val { font-family: 'Cormorant Garamond', serif; font-size: 22px; font-weight: 600; line-height: 1; }
+  .stat-val.red { color: var(--red); }
+  .stat-val.gold { color: var(--gold-light); }
+  .stat-val.green { color: var(--green); }
+  .stat-label { font-size: 9px; color: var(--muted); letter-spacing: 0.12em; text-transform: uppercase; margin-top: 3px; }
+
+  /* ── SIGNAL BANNER ── */
+  .signal-banner {
+    margin: 12px 16px 0;
+    padding: 12px 14px; border-radius: 10px;
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .signal-hot { background: rgba(217,95,95,0.1); border: 1px solid rgba(217,95,95,0.3); }
+  .signal-warm { background: rgba(184,146,42,0.1); border: 1px solid rgba(184,146,42,0.3); }
+  .signal-icon { font-size: 16px; flex-shrink: 0; margin-top: 1px; }
+  .signal-text { font-size: 12px; line-height: 1.55; }
+  .signal-title { font-weight: 600; margin-bottom: 2px; }
+  .signal-hot .signal-title { color: var(--red); }
+  .signal-warm .signal-title { color: var(--gold-light); }
+
+  /* ── SECTION ── */
+  .section-label {
+    padding: 16px 16px 8px;
+    font-size: 9px; color: var(--muted); letter-spacing: 0.18em; text-transform: uppercase; font-weight: 600;
+  }
+  .panel {
+    margin: 0 16px; background: var(--navy-mid);
+    border-radius: 12px; border: 1px solid var(--border-dim); overflow: hidden;
+  }
+
+  /* ── PROPERTY ROW ── */
+  .prop-row {
+    padding: 13px 16px; border-bottom: 1px solid var(--border-dim);
+    display: flex; gap: 10px; align-items: flex-start;
+  }
+  .prop-row:last-child { border-bottom: none; }
+  .prop-dot {
+    width: 7px; height: 7px; border-radius: 50%; margin-top: 5px; flex-shrink: 0;
+  }
+  .dot-red { background: var(--red); box-shadow: 0 0 6px rgba(217,95,95,0.5); }
+  .dot-gold { background: var(--gold); box-shadow: 0 0 6px rgba(184,146,42,0.4); }
+  .dot-green { background: var(--green); }
+  .dot-blue { background: #4A90B8; }
+  .dot-muted { background: #3A4A5A; }
+  .prop-info { flex: 1; min-width: 0; }
+  .prop-name { font-family: 'Cormorant Garamond', serif; font-size: 15px; font-weight: 600; color: var(--off-white); margin-bottom: 2px; }
+  .prop-address { font-size: 11px; color: var(--muted); margin-bottom: 4px; }
+  .prop-tags { display: flex; flex-wrap: wrap; gap: 5px; }
+  .tag {
+    font-size: 9px; font-family: 'DM Mono', monospace; letter-spacing: 0.06em;
+    padding: 2px 7px; border-radius: 4px; white-space: nowrap;
+  }
+  .tag-uc { background: rgba(95,158,138,0.12); color: var(--green); border: 1px solid rgba(95,158,138,0.25); }
+  .tag-planned { background: var(--gold-muted); color: var(--gold-light); border: 1px solid rgba(184,146,42,0.25); }
+  .tag-maturing { background: rgba(217,95,95,0.1); color: var(--red); border: 1px solid rgba(217,95,95,0.25); }
+  .tag-bridge { background: rgba(200,135,58,0.1); color: var(--amber); border: 1px solid rgba(200,135,58,0.25); }
+  .tag-construction { background: rgba(74,144,184,0.1); color: #7AB8D8; border: 1px solid rgba(74,144,184,0.2); }
+  .tag-perspective { background: rgba(255,255,255,0.05); color: var(--muted); border: 1px solid rgba(255,255,255,0.1); }
+  .tag-units { background: rgba(255,255,255,0.04); color: var(--off-white); border: 1px solid rgba(255,255,255,0.1); }
+  .prop-loan { font-size: 11px; color: var(--muted); margin-top: 4px; font-family: 'DM Mono', monospace; }
+  .prop-loan.hot { color: var(--red); }
+  .prop-loan.warm { color: var(--gold-light); }
+
+  /* ── LOAN TABLE ── */
+  .loan-row {
+    padding: 12px 16px; border-bottom: 1px solid var(--border-dim);
+    display: grid; grid-template-columns: 1fr auto; gap: 8px; align-items: start;
+  }
+  .loan-row:last-child { border-bottom: none; }
+  .loan-property { font-size: 13px; color: var(--off-white); margin-bottom: 2px; font-weight: 500; }
+  .loan-lender { font-size: 11px; color: var(--muted); }
+  .loan-right { text-align: right; }
+  .loan-amount { font-family: 'DM Mono', monospace; font-size: 12px; color: var(--gold-light); }
+  .loan-maturity { font-family: 'DM Mono', monospace; font-size: 11px; margin-top: 2px; }
+  .loan-maturity.hot { color: var(--red); }
+  .loan-maturity.warm { color: var(--gold-light); }
+  .loan-maturity.ok { color: var(--muted); }
+
+  /* ── OUTREACH BAR ── */
+  .outreach-bar {
+    margin: 16px 16px 0;
+    background: var(--navy-mid); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px;
+    display: flex; gap: 10px; align-items: center;
+  }
+  .outreach-bar-text { flex: 1; }
+  .outreach-bar-title { font-size: 13px; font-weight: 500; margin-bottom: 3px; }
+  .outreach-bar-sub { font-size: 11px; color: var(--muted); }
+  .outreach-btn {
+    background: var(--gold-muted); border: 1px solid var(--gold);
+    color: var(--gold-light); font-size: 12px; font-family: 'DM Sans', sans-serif;
+    font-weight: 500; padding: 9px 14px; border-radius: 8px; cursor: pointer;
+    white-space: nowrap; transition: all 0.15s;
+  }
+  .outreach-btn:active { transform: scale(0.97); }
+  .outreach-btn.copied { background: rgba(95,158,138,0.15); border-color: var(--green); color: var(--green); }
+
+  /* ── BOTTOM BAR ── */
+  .bottom-bar {
+    position: fixed; bottom: 0; left: 50%; transform: translateX(-50%);
+    width: 100%; max-width: 480px;
+    background: var(--navy); border-top: 1px solid rgba(184,146,42,0.12);
+    padding: 10px 20px; display: flex; justify-content: space-between; align-items: center;
+  }
+  .bottom-bar span { font-size: 10px; color: var(--muted); }
+  .bottom-bar .wcg { font-size: 10px; color: var(--gold); letter-spacing: 0.1em; }
+
+  .loading-state { padding: 40px; text-align: center; color: var(--muted); font-size: 13px; }
+  .mt12 { margin-top: 12px; }
+</style>
+</head>
+<body>
+
+<div style="max-width:480px; margin:0 auto;">
+
+  <!-- Header -->
+  <div class="header">
+    <div class="header-row">
+      <a class="back-btn" href="https://wcg-daily-driver.vercel.app">← Daily Driver</a>
+      <div class="header-title-group">
+        <div class="header-eyebrow">Wasatch Capital Group</div>
+        <div class="header-title">Owner 360</div>
+      </div>
+    </div>
+    <div class="search-wrap" id="searchWrap">
+      <span class="search-icon">⌕</span>
+      <input
+        class="search-input"
+        id="searchInput"
+        type="text"
+        placeholder="Search owner, developer, or company…"
+        autocomplete="off"
+        autocorrect="off"
+        spellcheck="false"
+      >
+      <button class="search-clear" id="searchClear" onclick="clearSearch()">✕</button>
+      <div class="suggestions" id="suggestions"></div>
+    </div>
+  </div>
+
+  <!-- Main -->
+  <div class="main" id="main">
+    <div class="empty-state">
+      <div class="empty-icon">🏢</div>
+      <div class="empty-title">Search any owner or developer</div>
+      <div class="empty-sub">See their full Yardi footprint — every property, loan, maturity date, and outreach signal — in one view.</div>
+    </div>
+  </div>
+
+</div>
+
+<!-- Bottom bar -->
+<div class="bottom-bar">
+  <span>cwagner@wasatchcg.com</span>
+  <span class="wcg">WCG</span>
+  <span>801.455.6965</span>
+</div>
+
+<script>
+const SB_URL = 'https://tddqgedubihzliosswzd.supabase.co';
+const SB_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InRkZHFnZWR1Ymloemxpb3Nzd3pkIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzMxMDEzNDAsImV4cCI6MjA4ODY3NzM0MH0.fRsXqdpYNQOi7B36O1SmkjBqwQCtDpenxsgZNEY5NyY';
+
+async function sb(table, params = '') {
+  const r = await fetch(`${SB_URL}/rest/v1/${table}${params}`, {
+    headers: { apikey: SB_KEY, Authorization: `Bearer ${SB_KEY}` }
+  });
+  return r.json();
+}
+
+// ── SEARCH AUTOCOMPLETE ──────────────────────────────────────────────────────
+let debounceTimer;
+const searchInput = document.getElementById('searchInput');
+const suggestionsEl = document.getElementById('suggestions');
+const searchClear = document.getElementById('searchClear');
+
+searchInput.addEventListener('input', () => {
+  const q = searchInput.value.trim();
+  searchClear.style.display = q ? 'block' : 'none';
+  clearTimeout(debounceTimer);
+  if (q.length < 2) { suggestionsEl.classList.remove('show'); return; }
+  debounceTimer = setTimeout(() => fetchSuggestions(q), 220);
+});
+
+searchInput.addEventListener('keydown', e => {
+  if (e.key === 'Escape') { suggestionsEl.classList.remove('show'); searchInput.blur(); }
+});
+
+document.addEventListener('click', e => {
+  if (!document.getElementById('searchWrap').contains(e.target)) {
+    suggestionsEl.classList.remove('show');
+  }
+});
+
+async function fetchSuggestions(q) {
+  const enc = encodeURIComponent(q.toLowerCase());
+  const data = await sb('yardi_master',
+    `?select=owner,owner_norm,units&owner_norm=ilike.*${enc}*&limit=200`
+  );
+
+  // Aggregate by owner
+  const map = {};
+  data.forEach(r => {
+    if (!r.owner) return;
+    if (!map[r.owner]) map[r.owner] = { name: r.owner, norm: r.owner_norm, props: 0, units: 0 };
+    map[r.owner].props++;
+    map[r.owner].units += (r.units || 0);
+  });
+
+  const owners = Object.values(map).sort((a, b) => b.props - a.props).slice(0, 8);
+
+  if (!owners.length) { suggestionsEl.classList.remove('show'); return; }
+
+  const ql = q.toLowerCase();
+  suggestionsEl.innerHTML = owners.map(o => {
+    const highlighted = o.name.replace(new RegExp(`(${q})`, 'gi'), '<em>$1</em>');
+    return `<div class="suggestion-item" onclick="selectOwner('${o.norm.replace(/'/g, "\\'")}', '${o.name.replace(/'/g, "\\'")}')">
+      <span class="sug-name">${highlighted}</span>
+      <span class="sug-meta">${o.props}p · ${o.units.toLocaleString()}u</span>
+    </div>`;
+  }).join('');
+  suggestionsEl.classList.add('show');
+}
+
+function clearSearch() {
+  searchInput.value = '';
+  searchClear.style.display = 'none';
+  suggestionsEl.classList.remove('show');
+  document.getElementById('main').innerHTML = `
+    <div class="empty-state">
+      <div class="empty-icon">🏢</div>
+      <div class="empty-title">Search any owner or developer</div>
+      <div class="empty-sub">See their full Yardi footprint — every property, loan, maturity date, and outreach signal — in one view.</div>
+    </div>`;
+}
+
+// ── LOAD OWNER 360 ───────────────────────────────────────────────────────────
+async function selectOwner(norm, displayName) {
+  suggestionsEl.classList.remove('show');
+  searchInput.value = displayName;
+  searchClear.style.display = 'block';
+
+  document.getElementById('main').innerHTML = '<div class="loading-state">Loading owner profile…</div>';
+
+  const enc = encodeURIComponent(norm);
+  const props = await sb('yardi_master',
+    `?owner_norm=eq.${enc}&order=completion_date.asc.nullslast`
+  );
+
+  if (!props.length) {
+    document.getElementById('main').innerHTML = '<div class="loading-state">No records found.</div>';
+    return;
+  }
+
+  renderOwner360(props, displayName);
+}
+
+// ── RENDER ───────────────────────────────────────────────────────────────────
+function renderOwner360(props, displayName) {
+  const totalUnits = props.reduce((s, p) => s + (p.units || 0), 0);
+  const loanProps = props.filter(p => p.loan_maturity_date);
+  const totalLoan = props.reduce((s, p) => s + (p.loan_amount_mm || 0), 0);
+
+  // Contact
+  const contactFirst = props.find(p => p.contact_first)?.contact_first || '';
+  const contactLast  = props.find(p => p.contact_last)?.contact_last || '';
+  const email        = props.find(p => p.contact_email)?.contact_email || '';
+  const phone        = props.find(p => p.contact_phone)?.contact_phone || '';
+  const contactName  = [contactFirst, contactLast].filter(Boolean).join(' ');
+
+  // Maturity signals
+  const now = new Date();
+  const maturities = loanProps
+    .map(p => ({ ...p, matDays: Math.floor((new Date(p.loan_maturity_date) - now) / 86400000) }))
+    .sort((a, b) => a.matDays - b.matDays);
+  const hotMaturity  = maturities.filter(p => p.matDays <= 365);
+  const warmMaturity = maturities.filter(p => p.matDays > 365 && p.matDays <= 730);
+
+  // Dataset summary
+  const datasets = [...new Set(props.map(p => p.source_dataset).filter(Boolean))];
+  const hasConstruction = datasets.some(d => ['construction','under_construction'].includes(d));
+  const hasMaturing     = datasets.includes('maturing');
+
+  // Signal
+  let signal = null;
+  if (hotMaturity.length) {
+    const earliest = hotMaturity[0];
+    const mo = Math.round(earliest.matDays / 30);
+    signal = {
+      type: 'hot',
+      title: `Loan maturing in ~${mo} month${mo === 1 ? '' : 's'}`,
+      text: `${earliest.property_name || 'Property'} has a ${earliest.loan_type || 'loan'} maturing ${fmtDate(earliest.loan_maturity_date)}${earliest.lender ? ` with ${earliest.lender}` : ''}. This is a live refinance conversation.`
+    };
+  } else if (warmMaturity.length) {
+    const earliest = warmMaturity[0];
+    signal = {
+      type: 'warm',
+      title: `Loan maturing within 2 years`,
+      text: `${earliest.property_name || 'Property'} matures ${fmtDate(earliest.loan_maturity_date)}. Good time to introduce WCG before the RFP window opens.`
+    };
+  } else if (hasConstruction) {
+    signal = {
+      type: 'warm',
+      title: 'Active construction — perm financing upcoming',
+      text: `${displayName} has properties under construction or planned. Perm and bridge conversations should start 12–18 months before delivery.`
+    };
+  }
+
+  // Outreach opener
+  const openerText = buildOpener(displayName, props, hotMaturity, warmMaturity, hasConstruction);
+
+  // ── Sort properties: maturing first, then UC, then planned, then rest
+  const order = { maturing: 0, bridge: 1, construction: 2, under_construction: 3, completions: 4, planned: 5, perspective: 6 };
+  const sorted = [...props].sort((a, b) => (order[a.source_dataset] ?? 9) - (order[b.source_dataset] ?? 9));
+
+  // ── BUILD HTML ──
+  let html = '';
+
+  // Owner card
+  html += `<div class="owner-card">
+    <div class="owner-name">${displayName}</div>
+    <div class="owner-contact">`;
+  if (contactName) html += `${contactName}`;
+  if (phone) html += ` · <a href="tel:${phone}">${fmtPhone(phone)}</a>`;
+  if (email) html += ` · <a href="mailto:${email}">${email}</a>`;
+  html += `</div>
+    <div class="stat-row">
+      <div class="stat-box">
+        <div class="stat-val">${props.length}</div>
+        <div class="stat-label">Properties</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val">${totalUnits.toLocaleString()}</div>
+        <div class="stat-label">Total Units</div>
+      </div>
+      <div class="stat-box">
+        <div class="stat-val ${hotMaturity.length ? 'red' : warmMaturity.length ? 'gold' : 'green'}">${loanProps.length}</div>
+        <div class="stat-label">Loans on File</div>
+      </div>
+    </div>
+  </div>`;
+
+  // Signal banner
+  if (signal) {
+    html += `<div class="signal-banner signal-${signal.type}">
+      <div class="signal-icon">${signal.type === 'hot' ? '🔴' : '🟡'}</div>
+      <div class="signal-text">
+        <div class="signal-title">${signal.title}</div>
+        ${signal.text}
+      </div>
+    </div>`;
+  }
+
+  // Outreach bar
+  html += `<div class="outreach-bar mt12">
+    <div class="outreach-bar-text">
+      <div class="outreach-bar-title">Ready-to-send opener</div>
+      <div class="outreach-bar-sub">Tap to copy · personalized from Yardi data</div>
+    </div>
+    <button class="outreach-btn" id="copyOpenerBtn" onclick="copyOpener()">Copy</button>
+  </div>`;
+
+  // Hidden opener text
+  html += `<div id="hiddenOpener" style="display:none">${openerText}</div>`;
+
+  // Maturing loans section
+  if (loanProps.length) {
+    html += `<div class="section-label">Loans on File (${loanProps.length})</div>
+    <div class="panel">`;
+    maturities.forEach(p => {
+      const cls = p.matDays <= 365 ? 'hot' : p.matDays <= 730 ? 'warm' : 'ok';
+      html += `<div class="loan-row">
+        <div>
+          <div class="loan-property">${p.property_name || p.address || '—'}</div>
+          <div class="loan-lender">${p.lender || p.lender_type || '—'} · ${p.loan_type || '—'}</div>
+        </div>
+        <div class="loan-right">
+          <div class="loan-amount">${p.loan_amount_mm ? '$' + p.loan_amount_mm.toFixed(1) + 'M' : '—'}</div>
+          <div class="loan-maturity ${cls}">${p.loan_maturity_date ? fmtDate(p.loan_maturity_date) : '—'}</div>
+        </div>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  // All properties
+  html += `<div class="section-label">All Properties (${sorted.length})</div>
+  <div class="panel">`;
+
+  sorted.forEach(p => {
+    const dotCls = p.source_dataset === 'maturing' ? 'dot-red'
+      : p.source_dataset === 'bridge' ? 'dot-gold'
+      : ['construction','under_construction'].includes(p.source_dataset) ? 'dot-green'
+      : p.source_dataset === 'planned' ? 'dot-blue'
+      : 'dot-muted';
+
+    const daysToMat = p.loan_maturity_date
+      ? Math.floor((new Date(p.loan_maturity_date) - new Date()) / 86400000)
+      : null;
+    const loanCls = daysToMat !== null ? (daysToMat <= 365 ? 'hot' : daysToMat <= 730 ? 'warm' : '') : '';
+
+    html += `<div class="prop-row">
+      <div class="prop-dot ${dotCls}"></div>
+      <div class="prop-info">
+        <div class="prop-name">${p.property_name || p.address || 'Unnamed'}</div>
+        <div class="prop-address">${[p.address, p.city, p.state].filter(Boolean).join(', ')}</div>
+        <div class="prop-tags">
+          ${tagHtml(p.source_dataset)}
+          ${p.units ? `<span class="tag tag-units">${p.units} units</span>` : ''}
+          ${p.submarket ? `<span class="tag tag-perspective">${p.submarket.replace(/^\d+ - /, '')}</span>` : ''}
+        </div>
+        ${p.loan_maturity_date ? `<div class="prop-loan ${loanCls}">Matures ${fmtDate(p.loan_maturity_date)}${p.lender ? ' · ' + p.lender : ''}</div>` : ''}
+      </div>
+    </div>`;
+  });
+
+  html += `</div>`;
+
+  document.getElementById('main').innerHTML = html;
+}
+
+// ── HELPERS ──────────────────────────────────────────────────────────────────
+function tagHtml(src) {
+  const map = {
+    maturing:          ['tag-maturing', 'MATURING'],
+    bridge:            ['tag-bridge',   'BRIDGE'],
+    construction:      ['tag-construction', 'CONST LOAN'],
+    under_construction:['tag-uc',        'UNDER CONST'],
+    planned:           ['tag-planned',   'PLANNED'],
+    completions:       ['tag-uc',        'COMPLETING'],
+    perspective:       ['tag-perspective','PIPELINE'],
+  };
+  const [cls, label] = map[src] || ['tag-perspective', src?.toUpperCase() || ''];
+  return `<span class="tag ${cls}">${label}</span>`;
+}
+
+function fmtDate(d) {
+  if (!d) return '';
+  const dt = new Date(d + 'T12:00:00');
+  return dt.toLocaleDateString('en-US', { month: 'short', year: 'numeric' });
+}
+
+function fmtPhone(p) {
+  const d = (p || '').replace(/\D/g, '');
+  if (d.length === 10) return `(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`;
+  return p;
+}
+
+function buildOpener(name, props, hot, warm, hasConstruction) {
+  const units = props.reduce((s, p) => s + (p.units || 0), 0);
+  const cities = [...new Set(props.map(p => p.city).filter(Boolean))].slice(0, 2).join(' and ');
+
+  if (hot.length) {
+    const p = hot[0];
+    const mo = Math.round(Math.floor((new Date(p.loan_maturity_date) - new Date()) / 86400000) / 30);
+    return `Hi [Name], I noticed your ${p.loan_type || 'loan'} on ${p.property_name || 'your property'} is coming up for maturity in about ${mo} months. As we get closer to that window, I wanted to reach out and share what we're seeing on the HUD and agency side — rates have moved meaningfully and LTV has improved. I'd be happy to run a quick comparison if it would be useful.`;
+  }
+  if (warm.length) {
+    const p = warm[0];
+    return `Hi [Name], I was looking at your portfolio in ${cities || 'the Salt Lake market'} and wanted to reach out ahead of the maturity on ${p.property_name || 'your upcoming loan'}. We're seeing strong HUD 223(f) execution right now — non-recourse, 35-year fixed, and LTV pushing back toward 80%. Happy to run numbers on any of your assets if the timing is right.`;
+  }
+  if (hasConstruction) {
+    return `Hi [Name], I've been following ${name}'s activity in ${cities || 'the market'} — you have a meaningful amount of product either under construction or in the pipeline. As those assets approach lease-up, I'd love to talk through what permanent financing looks like today. HUD and agency execution has improved considerably over the past 12 months. Happy to put together a quick term comparison if it would be helpful.`;
+  }
+  return `Hi [Name], I've been tracking ${name}'s portfolio across ${cities || 'the market'} — ${props.length} properties, roughly ${units.toLocaleString()} units. I wanted to introduce WCG and share what we're seeing on the HUD and agency side as the market cycle turns. Happy to connect whenever timing makes sense.`;
+}
+
+function copyOpener() {
+  const text = document.getElementById('hiddenOpener')?.textContent || '';
+  navigator.clipboard.writeText(text).then(() => {
+    const btn = document.getElementById('copyOpenerBtn');
+    btn.textContent = '✓ Copied';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = 'Copy'; btn.classList.remove('copied'); }, 2500);
+  });
+}
+</script>
+</body>
+</html>
